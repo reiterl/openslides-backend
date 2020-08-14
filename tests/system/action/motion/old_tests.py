@@ -3,9 +3,9 @@ from copy import deepcopy
 from typing import Any, Dict
 from unittest.mock import MagicMock
 
-from openslides_backend.action.motion.delete import MotionDelete
+from openslides_backend.action.motion.create_update_delete import MotionActionSet
 from openslides_backend.action.motion.sort import MotionSort
-from openslides_backend.action.motion.update import MotionUpdate, MotionUpdateMetadata
+from openslides_backend.action.motion.update import MotionUpdateMetadata
 from openslides_backend.shared.exceptions import ActionException, PermissionDenied
 from tests.system.action.base import BaseActionTestCase
 from tests.util import get_fqfield, get_fqid
@@ -32,7 +32,7 @@ class MotionUpdateActionUnitTester(BaseMotionUpdateActionTester):
     def setUp(self) -> None:
         super().setUp()
         user_id = 7826715669
-        self.action = MotionUpdate(
+        self.action = MotionActionSet.get_action("update")(
             "motion.update",
             MagicMock(superuser=user_id),  # noqa: F821
             MagicMock(old_style_testing=True),  # noqa: F821
@@ -66,7 +66,7 @@ class MotionUpdateActionPerformTester(BaseMotionUpdateActionTester):
     def setUp(self) -> None:
         super().setUp()
         self.user_id = 7826715669
-        self.action = MotionUpdate(
+        self.action = MotionActionSet.get_action("update")(
             "motion.update",
             MagicMock(superuser=self.user_id),  # noqa: F821
             MagicMock(old_style_testing=True),  # noqa: F821
@@ -303,7 +303,7 @@ class MotionDeleteActionUnitTester(BaseMotionDeleteActionTester):
     def setUp(self) -> None:
         super().setUp()
         user_id = 7826715669
-        self.action = MotionDelete(
+        self.action = MotionActionSet.get_action("delete")(
             "motion.delete",
             MagicMock(superuser=user_id),  # noqa: F821
             MagicMock(old_style_testing=True),  # noqa: F821
@@ -371,7 +371,7 @@ class MotionDeleteActionPerformTester(BaseMotionDeleteActionTester):
     def setUp(self) -> None:
         super().setUp()
         self.user_id = 7826715669
-        self.action = MotionDelete(
+        self.action = MotionActionSet.get_action("delete")(
             "motion.delete",
             MagicMock(superuser=self.user_id),  # noqa: F821
             MagicMock(old_style_testing=True),  # noqa: F821
