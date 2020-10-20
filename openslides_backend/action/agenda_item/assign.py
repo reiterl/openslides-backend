@@ -1,17 +1,17 @@
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ...models.models import AgendaItem
 from ...shared.exceptions import ActionException
 from ...shared.filters import FilterOperator
-from ...shared.interfaces import Event, WriteRequestElement
 from ...shared.patterns import FullQualifiedId
 from ...shared.schema import schema_version
-from ..base import Action, ActionPayload, DataSet
+from ..base import ActionPayload
+from ..generics import UpdateAction
 from ..register import register_action
 
 
 @register_action("agenda_item.assign")
-class AgendaItemAssign(Action):
+class AgendaItemAssign(UpdateAction):
     """
     Action to assign agenda items.
     """
@@ -46,18 +46,16 @@ class AgendaItemAssign(Action):
         "minItems": 1,
     }
 
-    def prepare_dataset(self, payload: ActionPayload) -> DataSet:
-        data = self.prepare_assign_data(
+    def get_updated_instances(self, payload: ActionPayload) -> List[Dict[str, Any]]:
+        return self.prepare_assign_data(
             parent_id=payload[0]["parent_id"],
             ids=payload[0]["ids"],
             meeting_id=payload[0]["meeting_id"],
         )
 
-        return {"data": data}
-
     def prepare_assign_data(
         self, parent_id: Optional[int], ids: List[int], meeting_id: int
-    ) -> Dict[int, Any]:
+    ) -> List[Dict[str, Any]]:
         filter = FilterOperator("meeting_id", "=", meeting_id)
         db_instances = self.database.filter(
             collection=self.model.collection,
@@ -65,14 +63,14 @@ class AgendaItemAssign(Action):
             mapped_fields=["id"],
             lock_result=True,
         )
-        data: Dict[int, Any] = {}
+        updated_instances = []
 
         if parent_id is None:
             for id_ in ids:
                 if id_ not in db_instances:
                     raise ActionException(f"Id {id_} not in db_instances.")
-                data[id_] = {"parent_id": None}
-            return data
+                updated_instances.append({"id": id_, "parent_id": None})
+            return updated_instances
 
         # calc the ancesters of parent id
         ancesters = [parent_id]
@@ -92,17 +90,5 @@ class AgendaItemAssign(Action):
                 )
             if id_ not in db_instances:
                 raise ActionException(f"Id {id_} not in db_instances.")
-            data[id_] = {"parent_id": parent_id}
-        return data
-
-    def create_write_request_elements(
-        self, dataset: DataSet
-    ) -> Iterable[WriteRequestElement]:
-        for id, instance in dataset["data"].items():
-            fqid = FullQualifiedId(self.model.collection, id)
-            information = {fqid: ["Object sorted"]}
-            event = Event(type="update", fqid=fqid, fields=instance)
-            # TODO: Lock some fields to protect against intermediate creation of new instances but care where exactly to lock them.
-            yield WriteRequestElement(
-                events=[event], information=information, user_id=self.user_id
-            )
+            updated_instances.append({"id": id_, "parent_id": parent_id})
+        return updated_instances
