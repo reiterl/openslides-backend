@@ -20,9 +20,11 @@ class CreateAction(Action):
         # Fetch new id to have it available in update_instance method
         new_id = self.datastore.reserve_id(collection=self.model.collection)
         instance["id"] = new_id
-        self.datastore.additional_relation_models[
-            FullQualifiedId(self.model.collection, instance["id"])
-        ] = instance
+        fqid = FullQualifiedId(self.model.collection, instance["id"])
+        if fqid in self.datastore.additional_relation_models:
+            self.datastore.additional_relation_models[fqid].update(instance)
+        else:
+            self.datastore.additional_relation_models[fqid] = instance
 
         instance = self.update_instance(instance)
         instance = self.validate_relation_fields(instance)
