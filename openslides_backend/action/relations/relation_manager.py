@@ -7,7 +7,7 @@ from openslides_backend.services.datastore.deleted_models_behaviour import (
 from ...models.base import Model, model_registry
 from ...models.fields import BaseRelationField, BaseTemplateField, Field
 from ...services.datastore.interface import DatastoreService
-from ...shared.exceptions import DatastoreException
+from ...shared.exceptions import ActionException, DatastoreException
 from ...shared.patterns import FullQualifiedField, FullQualifiedId
 from ...shared.typing import ModelMap
 from .calculated_field_handlers_map import calculated_field_handlers_map
@@ -161,7 +161,9 @@ class RelationManager:
             elif isinstance(field_value, list):
                 pass  # Todo: check this one: for default_projector_$_id there is the list of possible replacements
             else:
-                raise ActionException(f"Field '{field_name}'' has no dict as value: '{field_value}'")
+                raise ActionException(
+                    f"Field '{field_name}'' has no dict as value: '{field_value}'"
+                )
 
         # process directly given structured fields, overwriting any previous ones
         for field_name, field in structured_fields:

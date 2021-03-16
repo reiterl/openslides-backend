@@ -24,6 +24,10 @@ from ...models.fields import (
     TemplateRelationField,
     TemplateRelationListField,
 )
+from ...services.datastore.deleted_models_behaviour import (
+    DeletedModelsBehaviour,
+    InstanceAdditionalBehaviour,
+)
 from ...services.datastore.interface import (
     DatastoreService,
     GetManyRequest,
@@ -38,7 +42,7 @@ from ...shared.patterns import (
 )
 from ...shared.typing import DeletedModel, ModelMap
 from .typing import FieldUpdateElement, IdentifierList, RelationFieldUpdates
-from ...services.datastore.deleted_models_behaviour import InstanceAdditionalBehaviour
+
 
 class SingleRelationHandler:
     """
@@ -161,9 +165,11 @@ class SingleRelationHandler:
             # acquire all related models with the related fields
             rels = defaultdict(dict)
             for fqid in changed_fqids_per_collection[collection]:
-                related_model = self.fetch_model(
+                related_model = self.datastore.fetch_model(
                     fqid,
                     [related_name],
+                    get_deleted_models=DeletedModelsBehaviour.NO_DELETED,
+                    db_additional_relevance=InstanceAdditionalBehaviour.ADDITIONAL_BEFORE_DBINST,
                 )
                 # again, we transform everything to lists of fqids
                 rels[fqid][related_name] = self.transform_to_fqids(
@@ -337,7 +343,9 @@ class SingleRelationHandler:
             # Retrieve current object from datastore
             current_obj = self.datastore.fetch_model(
                 FullQualifiedId(self.model.collection, self.id),
-                [self.field_name], db_additional_relevance=InstanceAdditionalBehaviour.ONLY_DBINST, exception=False
+                [self.field_name],
+                db_additional_relevance=InstanceAdditionalBehaviour.ONLY_DBINST,
+                exception=False,
             )
 
             # Get current ids from relation field

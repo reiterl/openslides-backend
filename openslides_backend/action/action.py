@@ -11,6 +11,7 @@ from ..models.fields import (
     BaseTemplateRelationField,
 )
 from ..services.auth.interface import AuthenticationService
+from ..services.datastore.deleted_models_behaviour import InstanceAdditionalBehaviour
 from ..services.datastore.interface import DatastoreService
 from ..services.media.interface import MediaService
 from ..services.permission.interface import PermissionService
@@ -28,7 +29,7 @@ from ..shared.typing import ModelMap
 from .relations.relation_manager import RelationManager
 from .relations.typing import FieldUpdateElement, ListUpdateElement
 from .util.typing import ActionData, ActionResultElement, ActionResults
-from ..services.datastore.deleted_models_behaviour import InstanceAdditionalBehaviour
+
 
 class SchemaProvider(type):
     """
@@ -388,7 +389,11 @@ class Action(BaseAction, metaclass=SchemaProvider):
         fqids = self.get_field_value_as_fqid_list(field, instance[instance_field])
         equal_fields = field.equal_fields + additional_equal_fields
         for fqid in fqids:
-            related_model = self.datastore.fetch_model(fqid, equal_fields, db_additional_relevance=InstanceAdditionalBehaviour.ADDITIONAL_BEFORE_DBINST)
+            related_model = self.datastore.fetch_model(
+                fqid,
+                equal_fields,
+                db_additional_relevance=InstanceAdditionalBehaviour.ADDITIONAL_BEFORE_DBINST,
+            )
             for equal_field_name in equal_fields:
                 if instance.get(equal_field_name) != related_model.get(
                     equal_field_name
