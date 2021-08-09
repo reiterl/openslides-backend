@@ -61,6 +61,10 @@ class BaseSystemTestCase(TestCase):
         self.client = self.create_client(ADMIN_USERNAME, ADMIN_PASSWORD)
         self.anon_client = self.create_client()
 
+    def tearDown(self) -> None:
+        with open("/app/openslides_backend/test-debug.log", "a") as f1:
+            f1.write(f"{self.id()} {self.datastore.get_count} {self.datastore.get_many_count}\n")
+
     def load_example_data(self) -> None:
         """
         Useful for debug purposes when an action fails with the example data.

@@ -68,6 +68,8 @@ class DatastoreAdapter(DatastoreService):
         self.locked_fields = {}
         self.additional_relation_models = defaultdict(dict)
         self.additional_relation_model_locks = {}
+        self.get_count = 0
+        self.get_many_count = 0
 
     def retrieve(self, command: commands.Command) -> DatastoreResponse:
         """
@@ -103,6 +105,7 @@ class DatastoreAdapter(DatastoreService):
         get_deleted_models: DeletedModelsBehaviour = DeletedModelsBehaviour.NO_DELETED,
         lock_result: LockResult = True,
     ) -> PartialModel:
+        self.get_count += 1
         mapped_fields_set = set()
         if mapped_fields:
             mapped_fields_set.update(mapped_fields)
@@ -139,6 +142,7 @@ class DatastoreAdapter(DatastoreService):
         get_deleted_models: DeletedModelsBehaviour = DeletedModelsBehaviour.NO_DELETED,
         lock_result: bool = True,
     ) -> Dict[Collection, Dict[int, PartialModel]]:
+        self.get_many_count += 1
         if lock_result:
             for get_many_request in get_many_requests:
                 if get_many_request.mapped_fields is not None:
